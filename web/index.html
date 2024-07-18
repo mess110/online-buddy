@@ -8,6 +8,35 @@
 
 <body>
     <h1>Hello world</h1>
+    <p id="client-id"></p>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search)
+        let uuid = urlParams.get('uuid')
+        if (uuid === null || uuid === "" || uuid === undefined) {
+            uuid = crypto.randomUUID()
+        }
+        
+        document.querySelector('#client-id').innerHTML = uuid
+
+        var socket = new WebSocket("/ws/" + uuid)
+
+        socket.onopen = function(event) {
+            console.log("connected")
+        }
+
+        socket.onmessage = function(event) {
+            console.log(event)
+        };
+
+        socket.onerror = function(event) {
+            console.error(error);
+        }
+
+        socket.onclose = function(event) {
+            console.log("disconnected")
+        }
+    </script>
 </body>
 
 </html>

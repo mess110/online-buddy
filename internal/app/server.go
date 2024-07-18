@@ -10,6 +10,10 @@ import (
 func serve(app *OnlineBuddy) {
 	port := app.Port
 
+	http.HandleFunc("/ws/{channel}", func(w http.ResponseWriter, r *http.Request) {
+		HandleWebsocket(app, w, r)
+	})
+
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
 
