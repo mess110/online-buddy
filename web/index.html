@@ -7,35 +7,79 @@
 </head>
 
 <body>
-    <h1>Hello world</h1>
-    <p id="client-id"></p>
+    <h3>online-buddy</h3>
+    <button id="connect" autocomplete="off">connect</button>
+    <button id="disconnect" disabled autocomplete="off">disconnect</button>
+    <p>You are: <span id="uuid"></span></p>
+    <p>Status: <span id="status">disconnected</span></p>
+    <p>Friends online: <span id="friends"></span></p>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search)
-        let uuid = urlParams.get('uuid')
-        if (uuid === null || uuid === "" || uuid === undefined) {
-            uuid = crypto.randomUUID()
-        }
-        
-        document.querySelector('#client-id').innerHTML = uuid
-
-        var socket = new WebSocket("/ws/" + uuid)
-
-        socket.onopen = function(event) {
-            console.log("connected")
+        const getUUID = () => {
+            const urlParams = new URLSearchParams(window.location.search)
+            let uuid = urlParams.get('uuid')
+            if (uuid === null || uuid === "" || uuid === undefined) {
+                uuid = crypto.randomUUID()
+            }
+            return uuid
         }
 
-        socket.onmessage = function(event) {
-            console.log(event)
-        };
+        let uuid = document.querySelector("#uuid")
+        let status = document.querySelector("#status")
+        let friends = document.querySelector("#friends")
 
-        socket.onerror = function(event) {
-            console.error(error);
-        }
+        let connectButton = document.querySelector("#connect")
+        let disconnectButton = document.querySelector("#disconnect")
 
-        socket.onclose = function(event) {
-            console.log("disconnected")
-        }
+        uuid.innerHTML = getUUID()
+        let socket
+        let friendsOnline = new Set()
+
+        connectButton.addEventListener('click', (event) => {
+            status.innerHTML = "connecting"
+            connectButton.setAttribute("disabled", "true")
+            socket = new WebSocket("/ws/" + uuid.innerHTML)
+
+            socket.onopen = function(event) {
+                connectButton.setAttribute("disabled", "true")
+                disconnectButton.removeAttribute("disabled")
+                status.innerHTML = "connected"
+            }
+
+            socket.onmessage = function(event) {
+                let data = JSON.parse(event.data)
+                console.log("received", data)
+                if ("friends_online" in data) {
+                    friendsOnline = new Set(data["friends_online"])
+                } else {
+                    let status = data["status"]
+                    let userID = data["user_id"]
+                    if (status == "online") {
+                        friendsOnline.add(userID)
+                    } else {
+                        friendsOnline.delete(userID)
+                    }
+                }
+                friends.innerHTML = Array.from(friendsOnline).join(", ")
+            }
+
+            socket.onerror = function(event) {
+                console.error(event)
+            }
+
+            socket.onclose = function(event) {
+                connectButton.removeAttribute("disabled")
+                disconnectButton.setAttribute("disabled", "true")
+                friendsOnline = new Set()
+                friends.innerHTML = Array.from(friendsOnline).join(", ")
+                status.innerHTML = "disconnected"
+            }
+        })
+
+        disconnectButton.addEventListener('click', (event) => {
+            status.innerHTML = "disconnecting"
+            socket.close()
+        })
     </script>
 </body>
 
