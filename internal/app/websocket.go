@@ -92,8 +92,13 @@ func sendUserStatus(conn *websocket.Conn, msg *redis.Message) error {
 }
 
 func sendOnlineFriends(conn *websocket.Conn, channel string) error {
-	friends := friendGraph[channel]
-	onlineFriendsMessage := NewOnlineFriendsMessage(channel, friends)
+	onlineFriends := []string{}
+	for _, friend := range friendGraph[channel] {
+		if userStatus[friend] == OnlineStatus {
+			onlineFriends = append(onlineFriends, friend)
+		}
+	}
+	onlineFriendsMessage := NewOnlineFriendsMessage(channel, onlineFriends)
 	err := conn.WriteJSON(onlineFriendsMessage)
 	if err != nil {
 		return err
