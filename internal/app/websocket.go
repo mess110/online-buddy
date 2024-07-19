@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -11,7 +10,6 @@ import (
 )
 
 var (
-	ctx      = context.Background()
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -33,7 +31,7 @@ func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	friendsChannels := friendGraph[channel]
-	sub := app.RedisClient.Subscribe(ctx, friendsChannels...)
+	sub := app.RedisDB.Subscribe(friendsChannels...)
 	defer sub.Close()
 	ch := sub.Channel()
 
@@ -111,7 +109,7 @@ func publish(app *OnlineBuddy, channel string, message any) error {
 	if err != nil {
 		return err
 	}
-	err = app.RedisClient.Publish(ctx, channel, messageJSON).Err()
+	err = app.RedisDB.Publish(channel, messageJSON).Err()
 	if err != nil {
 		return err
 	}

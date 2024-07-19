@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 )
 
@@ -12,8 +11,8 @@ type OnlineBuddy struct {
 	Port      string
 	DBAddress string
 
-	Logger      *zap.Logger
-	RedisClient *redis.Client
+	Logger  *zap.Logger
+	RedisDB *RedisDB
 }
 
 func Init() {
@@ -26,8 +25,8 @@ func Init() {
 		Port:      EnvOrDefault("API_PORT", "3000"),
 		DBAddress: dbAddress,
 
-		Logger:      NewLogger(),
-		RedisClient: NewRedisClient(dbAddress),
+		Logger:  NewLogger(),
+		RedisDB: NewRedisClient(dbAddress),
 	}
 
 	app.Logger.Info(
