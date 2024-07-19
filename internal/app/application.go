@@ -8,7 +8,8 @@ import (
 type OnlineBuddy struct {
 	Name      string
 	Version   string
-	Port      int
+	Host      string
+	Port      string
 	DBAddress string
 
 	Logger      *zap.Logger
@@ -16,14 +17,13 @@ type OnlineBuddy struct {
 }
 
 func Init() {
-	// TODO: env variables
-	dbAddress := "localhost:6379"
-	port := 3000
+	dbAddress := EnvOrDefault("REDIS_CONNECTION_URL", "localhost:6379")
 
 	app := &OnlineBuddy{
 		Name:      "online-buddy",
 		Version:   "0.0.1",
-		Port:      port,
+		Host:      "0.0.0.0",
+		Port:      EnvOrDefault("API_PORT", "3000"),
 		DBAddress: dbAddress,
 
 		Logger:      NewLogger(),
