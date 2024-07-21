@@ -12,6 +12,10 @@ Since pubsub doesn't scale horizontally by default in redis, this system is flaw
 
 There are a few ways to overcome this which need to be explored:
 
-* create a redis node specifically for pubsub - this will fail when we have a lot of users and is a single point of failure. Even though we scale the storage, we can't scale the channels
-* implement some hash based sharding and some complex logic on top to handle which redis node to connect to using the friends list - this has some pitfalls when new friends are added and might be too complex to manage
-* use a different system which scales pubsub horizontally. some options to explore are: nats/kafka/rabbitmq
+1. create a redis node specifically for pubsub - this will fail when we have a lot of users and is a single point of failure. Even though we scale the storage, we can't scale the channels
+2. implement some hash based sharding and some complex logic on top to handle which redis node to connect to using the friends list - this has some pitfalls when new friends are added and might be too complex to manage
+3. use a different system which scales pubsub horizontally. some options to explore are: nats/kafka/rabbitmq
+
+## Conclusions
+
+Even though approach (2) might be worth exploring - it might be too complicated, I would instead start by look deeper into (3).
