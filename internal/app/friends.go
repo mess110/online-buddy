@@ -4,6 +4,10 @@ type FriendGraph struct {
 	friends map[string][]string
 }
 
+func (f *FriendGraph) getAllFriends(key string) []string {
+	return f.friends[key]
+}
+
 func NewFriendGraph() *FriendGraph {
 	result := map[string][]string{}
 
@@ -20,8 +24,4 @@ func NewFriendGraph() *FriendGraph {
 	return &FriendGraph{
 		friends: result,
 	}
-}
-
-func (f *FriendGraph) getAllFriends(key string) []string {
-	return f.friends[key]
 }

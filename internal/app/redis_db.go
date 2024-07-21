@@ -62,7 +62,7 @@ func (db *RedisDB) Subscribe(channels ...string) *redis.PubSub {
 	}
 }
 
-func (db *RedisDB) Publish(channel string, message interface{}) *redis.IntCmd {
+func (db *RedisDB) Publish(channel string, message any) *redis.IntCmd {
 	if db.isCluster {
 		return db.ClusterClient.Publish(channel, message)
 	} else {
@@ -70,8 +70,12 @@ func (db *RedisDB) Publish(channel string, message interface{}) *redis.IntCmd {
 	}
 }
 
-func (db *RedisDB) Set(key string, value interface{}) error {
-	exp := time.Duration(600 * time.Second) // 10 minutes
+func (db *RedisDB) Set(key string, value any) error {
+	return db.SetWithExpire(key, value, 0)
+}
+
+func (db *RedisDB) SetWithExpire(key string, value any, expireSeconds int) error {
+	exp := time.Duration(time.Duration(expireSeconds) * time.Second)
 	if db.isCluster {
 		return db.ClusterClient.Set(key, value, exp).Err()
 	} else {
@@ -79,7 +83,7 @@ func (db *RedisDB) Set(key string, value interface{}) error {
 	}
 }
 
-func (db *RedisDB) Get(key string) (interface{}, error) {
+func (db *RedisDB) Get(key string) (any, error) {
 	if db.isCluster {
 		return db.ClusterClient.Get(key).Result()
 	} else {
