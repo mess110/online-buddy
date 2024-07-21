@@ -8,18 +8,26 @@ import (
 	"go.uber.org/zap"
 )
 
+func renderJSON(app *OnlineBuddy, w http.ResponseWriter, _ *http.Request, data any) {
+	w.Header().Set("Content-Type", "application/json")
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		app.Logger.Error("error marshaling", zap.Error(err))
+	}
+	w.Write(b)
+}
+
 func serve(app *OnlineBuddy) {
 	host := app.Host
 	port := app.Port
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		renderJSON(app, w, r, map[string]string{"ping": "pong"})
+	})
 
-		b, err := json.Marshal(map[string]string{"ping": "pong"})
-		if err != nil {
-			app.Logger.Error("error marshaling", zap.Error(err))
-		}
-		w.Write(b)
+	http.HandleFunc("/friends", func(w http.ResponseWriter, r *http.Request) {
+		renderJSON(app, w, r, app.FriendGraph.friends)
 	})
 
 	http.HandleFunc("/ws/{channel}", func(w http.ResponseWriter, r *http.Request) {

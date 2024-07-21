@@ -1,6 +1,10 @@
 package app
 
-func NewFriendGraph() map[string][]string {
+type FriendGraph struct {
+	friends map[string][]string
+}
+
+func NewFriendGraph() *FriendGraph {
 	result := map[string][]string{}
 
 	result["kiki"] = []string{"felix", "branzi"}
@@ -13,5 +17,11 @@ func NewFriendGraph() map[string][]string {
 	result["f2bbc332-ea80-4ba2-a413-040c3e2ed1d8"] = []string{"5af4f9ea-c543-4a11-a384-78bcd681f8ff", "8f16b837-0ad0-47e8-9935-032f87047efb"}
 	result["8f16b837-0ad0-47e8-9935-032f87047efb"] = []string{"5af4f9ea-c543-4a11-a384-78bcd681f8ff"}
 
-	return result
+	return &FriendGraph{
+		friends: result,
+	}
+}
+
+func (f *FriendGraph) getAllFriends(key string) []string {
+	return f.friends[key]
 }

@@ -15,7 +15,6 @@ var (
 			return true
 		},
 	}
-	friendGraph = NewFriendGraph()
 )
 
 func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
@@ -29,8 +28,8 @@ func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	friendsChannels := friendGraph[channel]
-	sub := app.RedisDB.Subscribe(friendsChannels...)
+	allFriends := app.FriendGraph.getAllFriends(channel)
+	sub := app.RedisDB.Subscribe(allFriends...)
 	defer sub.Close()
 	ch := sub.Channel()
 
@@ -90,7 +89,7 @@ func sendUserStatus(conn *websocket.Conn, msg *redis.Message) error {
 
 func sendOnlineFriends(app *OnlineBuddy, conn *websocket.Conn, channel string) error {
 	onlineFriends := []string{}
-	allFriends := friendGraph[channel]
+	allFriends := app.FriendGraph.getAllFriends(channel)
 
 	for i, friend := range allFriends {
 		iface, err := app.RedisDB.Get(friend)
@@ -101,7 +100,7 @@ func sendOnlineFriends(app *OnlineBuddy, conn *websocket.Conn, channel string) e
 		if iface != nil {
 			val := iface.(string)
 			if val == string(OnlineStatus) {
-				friend := friendGraph[channel][i]
+				friend := allFriends[i]
 				onlineFriends = append(onlineFriends, friend)
 			}
 		}

@@ -100,6 +100,13 @@ services:
       args:
         - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
         - API_PORT=3000
+    depends_on:
+      - master0
+      - master1
+      - master2
+      - replica0
+      - replica1
+      - replica2
     networks:
       redis_cluster_net:
         ipv4_address: 173.18.0.40
@@ -112,6 +119,13 @@ services:
       args:
         - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
         - API_PORT=3001
+    depends_on:
+      - master0
+      - master1
+      - master2
+      - replica0
+      - replica1
+      - replica2
     networks:
       redis_cluster_net:
         ipv4_address: 173.18.0.41
