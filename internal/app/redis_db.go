@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/go-redis/redis/v7"
+	"go.uber.org/zap"
 )
 
 type RedisDB struct {
+	Client        *redis.Client
 	ClusterClient *redis.ClusterClient
 
 	ctx context.Context
@@ -17,24 +18,34 @@ type RedisDB struct {
 	isCluster bool
 }
 
-func NewRedisClient(addrs []string, isCluster bool) *RedisDB {
-	// rdb := redis.NewClient(&redis.Options{
-	// 	Addr: address,
-	// })
+func NewRedisClient(logger *zap.Logger, addrs []string, isCluster bool) *RedisDB {
+	var rdbc *redis.ClusterClient
+	var rdb *redis.Client
+	var pingErr error
 
-	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: addrs,
-	})
+	if isCluster {
+		rdbc = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs: addrs,
+		})
+
+		_, pingErr = rdbc.Ping().Result()
+	} else {
+		rdb = redis.NewClient(&redis.Options{
+			Addr: addrs[0],
+		})
+
+		_, pingErr = rdb.Ping().Result()
+	}
+
+	if pingErr != nil {
+		logger.Fatal("ping error", zap.Error(pingErr))
+	}
 
 	ctx := context.Background()
 
-	_, err := rdb.Ping().Result()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return &RedisDB{
-		ClusterClient: rdb,
+		Client:        rdb,
+		ClusterClient: rdbc,
 
 		ctx: ctx,
 
@@ -44,18 +55,34 @@ func NewRedisClient(addrs []string, isCluster bool) *RedisDB {
 }
 
 func (db *RedisDB) Subscribe(channels ...string) *redis.PubSub {
-	return db.ClusterClient.Subscribe(channels...)
+	if db.isCluster {
+		return db.ClusterClient.Subscribe(channels...)
+	} else {
+		return db.Client.Subscribe(channels...)
+	}
 }
 
 func (db *RedisDB) Publish(channel string, message interface{}) *redis.IntCmd {
-	return db.ClusterClient.Publish(channel, message)
+	if db.isCluster {
+		return db.ClusterClient.Publish(channel, message)
+	} else {
+		return db.Client.Publish(channel, message)
+	}
 }
 
 func (db *RedisDB) Set(key string, value interface{}) error {
 	exp := time.Duration(600 * time.Second) // 10 minutes
-	return db.ClusterClient.Set(key, value, exp).Err()
+	if db.isCluster {
+		return db.ClusterClient.Set(key, value, exp).Err()
+	} else {
+		return db.Client.Set(key, value, exp).Err()
+	}
 }
 
 func (db *RedisDB) Get(key string) (interface{}, error) {
-	return db.ClusterClient.Get(key).Result()
+	if db.isCluster {
+		return db.ClusterClient.Get(key).Result()
+	} else {
+		return db.Client.Get(key).Result()
+	}
 }

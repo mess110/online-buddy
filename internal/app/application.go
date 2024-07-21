@@ -33,7 +33,7 @@ func Init() {
 		IsCluster: isCluster,
 
 		Logger:  logger,
-		RedisDB: NewRedisClient(dbAddrs, isCluster),
+		RedisDB: NewRedisClient(logger, dbAddrs, isCluster),
 	}
 
 	app.Logger.Info(
