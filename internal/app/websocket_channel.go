@@ -30,12 +30,12 @@ func NewWebsocketChannel(config *AppConfig, connection *websocket.Conn, channel 
 
 func (wsc *WebsocketChannel) subscribe() {
 	allFriends := wsc.Config.FriendGraph.GetAllFriends(wsc.Channel)
-	sub := wsc.Config.RedisDB.Subscribe(allFriends...)
+	sub := wsc.Config.RedisWriteDB.Subscribe(allFriends...)
 	defer sub.Close()
 	ch := sub.Channel()
 
 	message := datatypes.NewUserStatusMessage(wsc.Channel, datatypes.OnlineStatus)
-	wsc.Config.RedisDB.Set(wsc.Channel, string(message.Status))
+	wsc.Config.RedisWriteDB.Set(wsc.Channel, string(message.Status))
 
 	err := wsc.sendOnlineFriends()
 	if err != nil {
@@ -68,7 +68,7 @@ func (wsc *WebsocketChannel) publish(message any) error {
 	if err != nil {
 		return err
 	}
-	err = wsc.Config.RedisDB.Publish(wsc.Channel, messageJSON).Err()
+	err = wsc.Config.RedisWriteDB.Publish(wsc.Channel, messageJSON).Err()
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (wsc *WebsocketChannel) sendOnlineFriends() error {
 	allFriends := wsc.Config.FriendGraph.GetAllFriends(wsc.Channel)
 
 	for i, friend := range allFriends {
-		iface, err := wsc.Config.RedisDB.Get(friend)
+		iface, err := wsc.Config.RedisReadDB.Get(friend)
 		if err != nil && err != redis.Nil {
 			logger.Error("all friends", zap.Error(err))
 			return err
@@ -131,7 +131,7 @@ func (wsc *WebsocketChannel) disconnect() {
 	channel := wsc.Channel
 
 	message := datatypes.NewUserStatusMessage(channel, datatypes.OfflineStatus)
-	wsc.Config.RedisDB.Set(channel, string(message.Status))
+	wsc.Config.RedisWriteDB.Set(channel, string(message.Status))
 	err := wsc.publish(message)
 	if err != nil {
 		logger.Error("publish error", zap.Error(err))

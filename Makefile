@@ -32,3 +32,8 @@ redis-reset:
 	redis-cli -c -p 6080 CLUSTER RESET
 	redis-cli -c -p 6180 CLUSTER RESET
 	redis-cli -c -p 6280 CLUSTER RESET
+
+redis-list-channels:
+	redis-cli -c -p 6079 pubsub channels
+	redis-cli -c -p 6179 pubsub channels
+	redis-cli -c -p 6279 pubsub channels

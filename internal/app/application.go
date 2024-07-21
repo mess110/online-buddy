@@ -14,11 +14,14 @@ type AppConfig struct {
 	Host    string
 	Port    string
 
-	DBAddrs   []string
-	IsCluster bool
+	DBWriteAddrs   []string
+	IsWriteCluster bool
+	DBReadAddrs    []string
+	IsReadCluster  bool
 
-	RedisDB     *db.RedisDB
-	FriendGraph *datatypes.FriendGraph
+	RedisWriteDB *db.RedisDB
+	RedisReadDB  *db.RedisDB
+	FriendGraph  *datatypes.FriendGraph
 }
 
 var (
@@ -26,8 +29,11 @@ var (
 )
 
 func Init() {
-	dbAddress := utils.EnvOrDefault("REDIS_CONNECTION_URL", "localhost:6379")
-	dbAddrs, isCluster := utils.GetAddrs(logger, dbAddress)
+	dbWriteAddress := utils.EnvOrDefault("REDIS_WRITE_CONNECTION_URL", "localhost:6379")
+	dbWriteAddrs, isWriteCluster := utils.GetAddrs(logger, dbWriteAddress)
+
+	dbReadAddress := utils.EnvOrDefault("REDIS_READ_CONNECTION_URL", "localhost:6379")
+	dbReadAddrs, isReadCluster := utils.GetAddrs(logger, dbReadAddress)
 
 	/*
 		Since its only a demo application, I am passing the RedisDB and
@@ -40,11 +46,14 @@ func Init() {
 		Host:    "0.0.0.0",
 		Port:    utils.EnvOrDefault("API_PORT", "3000"),
 
-		DBAddrs:   dbAddrs,
-		IsCluster: isCluster,
+		DBWriteAddrs:   dbWriteAddrs,
+		IsWriteCluster: isWriteCluster,
+		DBReadAddrs:    dbReadAddrs,
+		IsReadCluster:  isReadCluster,
 
-		RedisDB:     db.NewRedisClient(logger, dbAddrs, isCluster),
-		FriendGraph: datatypes.NewFriendGraph(),
+		RedisWriteDB: db.NewRedisClient(logger, dbWriteAddrs, isWriteCluster),
+		RedisReadDB:  db.NewRedisClient(logger, dbReadAddrs, isReadCluster),
+		FriendGraph:  datatypes.NewFriendGraph(),
 	}
 
 	logger.Info(
@@ -52,8 +61,11 @@ func Init() {
 		zap.String("name", app.Name),
 		zap.String("version", app.Version),
 		zap.String("host", app.Host),
-		zap.Strings("redis_db_addresses", app.DBAddrs),
-		zap.Bool("redis_is_cluster", app.IsCluster),
+
+		zap.Strings("redis_db_write_addresses", app.DBWriteAddrs),
+		zap.Bool("redis_is_write_cluster", app.IsWriteCluster),
+		zap.Strings("redis_db_read_addresses", app.DBReadAddrs),
+		zap.Bool("redis_is_read_cluster", app.IsReadCluster),
 	)
 
 	serve(app)

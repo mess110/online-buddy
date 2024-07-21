@@ -92,12 +92,11 @@ services:
         ipv4_address: 173.18.0.30
 
   online-buddy1:
-    ports:
-      - 3000:3000
     build:
       context: .
       args:
-        - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
+        - REDIS_WRITE_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
+        - REDIS_READ_CONNECTION_URL=["replica0:6080", "replica1:6180", "replica2:6280"]
         - API_PORT=3000
     depends_on:
       - master0
@@ -106,6 +105,7 @@ services:
       - replica0
       - replica1
       - replica2
+      - cluster-setup
     networks:
       redis_cluster_net:
         ipv4_address: 173.18.0.40
@@ -114,7 +114,8 @@ services:
     build:
       context: .
       args:
-        - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
+        - REDIS_WRITE_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
+        - REDIS_READ_CONNECTION_URL=["replica0:6080", "replica1:6180", "replica2:6280"]
         - API_PORT=3001
     depends_on:
       - master0
@@ -123,6 +124,7 @@ services:
       - replica0
       - replica1
       - replica2
+      - cluster-setup
     networks:
       redis_cluster_net:
         ipv4_address: 173.18.0.41
@@ -136,6 +138,12 @@ services:
     build:
       context: ./docker/load-balancer
     depends_on:
+      - master0
+      - master1
+      - master2
+      - replica0
+      - replica1
+      - replica2
       - online-buddy1
       - online-buddy2
 
