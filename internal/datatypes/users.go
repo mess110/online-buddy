@@ -1,4 +1,4 @@
-package app
+package datatypes
 
 type Presence string
 
@@ -12,14 +12,14 @@ type UserStatus struct {
 	Status Presence `json:"status"`
 }
 
-func NewUserStatusMessage(channel string, status Presence) *UserStatus {
-	message := UserStatus{UserID: channel, Status: status}
-	return &message
-}
-
 type UserFriendsOnline struct {
 	UserID        string   `json:"user_id"`
 	FriendsOnline []string `json:"friends_online"`
+}
+
+func NewUserStatusMessage(channel string, status Presence) *UserStatus {
+	message := UserStatus{UserID: channel, Status: status}
+	return &message
 }
 
 func NewOnlineFriendsMessage(channel string, onlineFriends []string) *UserFriendsOnline {

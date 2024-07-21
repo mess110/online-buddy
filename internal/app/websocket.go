@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/websocket"
+	"github.com/mess110/online-buddy/internal/datatypes"
 	"go.uber.org/zap"
 )
 
@@ -28,12 +29,13 @@ func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	allFriends := app.FriendGraph.getAllFriends(channel)
+	allFriends := app.FriendGraph.GetAllFriends(channel)
 	sub := app.RedisDB.Subscribe(allFriends...)
 	defer sub.Close()
 	ch := sub.Channel()
 
-	app.RedisDB.Set(channel, string(OnlineStatus))
+	message := datatypes.NewUserStatusMessage(channel, datatypes.OnlineStatus)
+	app.RedisDB.Set(channel, string(message.Status))
 
 	err = sendOnlineFriends(app, conn, channel)
 	if err != nil {
@@ -42,7 +44,6 @@ func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := NewUserStatusMessage(channel, OnlineStatus)
 	err = publish(app, channel, message)
 	if err != nil {
 		app.Logger.Error("publish error", zap.Error(err))
@@ -74,7 +75,7 @@ func handleDisconnect(app *OnlineBuddy, conn *websocket.Conn, channel string) {
 }
 
 func sendUserStatus(conn *websocket.Conn, msg *redis.Message) error {
-	data := UserStatus{}
+	data := datatypes.UserStatus{}
 	err := json.Unmarshal([]byte(msg.Payload), &data)
 	if err != nil {
 		return err
@@ -89,7 +90,7 @@ func sendUserStatus(conn *websocket.Conn, msg *redis.Message) error {
 
 func sendOnlineFriends(app *OnlineBuddy, conn *websocket.Conn, channel string) error {
 	onlineFriends := []string{}
-	allFriends := app.FriendGraph.getAllFriends(channel)
+	allFriends := app.FriendGraph.GetAllFriends(channel)
 
 	for i, friend := range allFriends {
 		iface, err := app.RedisDB.Get(friend)
@@ -99,14 +100,14 @@ func sendOnlineFriends(app *OnlineBuddy, conn *websocket.Conn, channel string) e
 		}
 		if iface != nil {
 			val := iface.(string)
-			if val == string(OnlineStatus) {
+			if val == string(datatypes.OnlineStatus) {
 				friend := allFriends[i]
 				onlineFriends = append(onlineFriends, friend)
 			}
 		}
 	}
 
-	onlineFriendsMessage := NewOnlineFriendsMessage(channel, onlineFriends)
+	onlineFriendsMessage := datatypes.NewOnlineFriendsMessage(channel, onlineFriends)
 	err := conn.WriteJSON(onlineFriendsMessage)
 	if err != nil {
 		return err
@@ -127,8 +128,8 @@ func publish(app *OnlineBuddy, channel string, message any) error {
 }
 
 func dc(app *OnlineBuddy, channel string) {
-	app.RedisDB.Set(channel, string(OfflineStatus))
-	message := NewUserStatusMessage(channel, OfflineStatus)
+	message := datatypes.NewUserStatusMessage(channel, datatypes.OfflineStatus)
+	app.RedisDB.Set(channel, string(message.Status))
 	err := publish(app, channel, message)
 	if err != nil {
 		app.Logger.Error("publish error", zap.Error(err))

@@ -2,6 +2,8 @@ package app
 
 import (
 	"go.uber.org/zap"
+
+	"github.com/mess110/online-buddy/internal/datatypes"
 )
 
 type OnlineBuddy struct {
@@ -16,7 +18,7 @@ type OnlineBuddy struct {
 	Logger  *zap.Logger
 	RedisDB *RedisDB
 
-	FriendGraph *FriendGraph
+	FriendGraph *datatypes.FriendGraph
 }
 
 func Init() {
@@ -37,7 +39,7 @@ func Init() {
 		Logger:  logger,
 		RedisDB: NewRedisClient(logger, dbAddrs, isCluster),
 
-		FriendGraph: NewFriendGraph(),
+		FriendGraph: datatypes.NewFriendGraph(),
 	}
 
 	app.Logger.Info(

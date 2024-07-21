@@ -27,7 +27,7 @@ func serve(app *OnlineBuddy) {
 	})
 
 	http.HandleFunc("/friends", func(w http.ResponseWriter, r *http.Request) {
-		renderJSON(app, w, r, app.FriendGraph.friends)
+		renderJSON(app, w, r, app.FriendGraph.GetAll())
 	})
 
 	http.HandleFunc("/ws/{channel}", func(w http.ResponseWriter, r *http.Request) {

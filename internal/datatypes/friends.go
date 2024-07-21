@@ -1,11 +1,15 @@
-package app
+package datatypes
 
 type FriendGraph struct {
 	friends map[string][]string
 }
 
-func (f *FriendGraph) getAllFriends(key string) []string {
+func (f *FriendGraph) GetAllFriends(key string) []string {
 	return f.friends[key]
+}
+
+func (f *FriendGraph) GetAll() map[string][]string {
+	return f.friends
 }
 
 func NewFriendGraph() *FriendGraph {
