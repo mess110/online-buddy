@@ -1,5 +1,10 @@
 package datatypes
 
+/*
+This struct holds the relationships between users, in a real app
+this would be stored somewhere else. For the sake of simplicity,
+I opted for a hardcoded map stored in memory
+*/
 type FriendGraph struct {
 	friends map[string][]string
 }
