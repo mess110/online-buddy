@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
@@ -15,7 +15,6 @@ var (
 			return true
 		},
 	}
-	userStatus  = make(map[string]Presence)
 	friendGraph = NewFriendGraph()
 )
 
@@ -35,9 +34,9 @@ func HandleWebsocket(app *OnlineBuddy, w http.ResponseWriter, r *http.Request) {
 	defer sub.Close()
 	ch := sub.Channel()
 
-	userStatus[channel] = OnlineStatus
+	app.RedisDB.Set(channel, string(OnlineStatus))
 
-	err = sendOnlineFriends(conn, channel)
+	err = sendOnlineFriends(app, conn, channel)
 	if err != nil {
 		app.Logger.Error("write json error", zap.Error(err))
 		dc(app, channel)
@@ -89,13 +88,25 @@ func sendUserStatus(conn *websocket.Conn, msg *redis.Message) error {
 	return nil
 }
 
-func sendOnlineFriends(conn *websocket.Conn, channel string) error {
+func sendOnlineFriends(app *OnlineBuddy, conn *websocket.Conn, channel string) error {
 	onlineFriends := []string{}
-	for _, friend := range friendGraph[channel] {
-		if userStatus[friend] == OnlineStatus {
-			onlineFriends = append(onlineFriends, friend)
+	allFriends := friendGraph[channel]
+
+	for i, friend := range allFriends {
+		iface, err := app.RedisDB.Get(friend)
+		if err != nil && err != redis.Nil {
+			app.Logger.Error("all friends", zap.Error(err))
+			return err
+		}
+		if iface != nil {
+			val := iface.(string)
+			if val == string(OnlineStatus) {
+				friend := friendGraph[channel][i]
+				onlineFriends = append(onlineFriends, friend)
+			}
 		}
 	}
+
 	onlineFriendsMessage := NewOnlineFriendsMessage(channel, onlineFriends)
 	err := conn.WriteJSON(onlineFriendsMessage)
 	if err != nil {
@@ -117,7 +128,7 @@ func publish(app *OnlineBuddy, channel string, message any) error {
 }
 
 func dc(app *OnlineBuddy, channel string) {
-	userStatus[channel] = OfflineStatus
+	app.RedisDB.Set(channel, string(OfflineStatus))
 	message := NewUserStatusMessage(channel, OfflineStatus)
 	err := publish(app, channel, message)
 	if err != nil {

@@ -15,3 +15,23 @@ docker_compose_all:
 
 docker_compose:
 	docker-compose up --build online-buddy
+
+redis-cli:
+	redis-cli
+
+redis-cli-cluster:
+	redis-cli -c -p 6079
+
+redis-reset:
+	redis-cli -c -p 6079 FLUSHALL
+	redis-cli -c -p 6079 CLUSTER RESET
+	redis-cli -c -p 6179 FLUSHALL
+	redis-cli -c -p 6179 CLUSTER RESET
+	redis-cli -c -p 6279 FLUSHALL
+	redis-cli -c -p 6279 CLUSTER RESET
+	redis-cli -c -p 6080 FLUSHALL
+	redis-cli -c -p 6080 CLUSTER RESET
+	redis-cli -c -p 6180 FLUSHALL
+	redis-cli -c -p 6180 CLUSTER RESET
+	redis-cli -c -p 6280 FLUSHALL
+	redis-cli -c -p 6280 CLUSTER RESET

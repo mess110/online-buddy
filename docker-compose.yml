@@ -2,59 +2,84 @@ services:
   master0:
     ports:
       - 6079:6079
+      - 16079:16079
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6079
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.10
 
   replica0:
     ports:
       - 6080:6080
+      - 16080:16080
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6080
     depends_on:
       - master0
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.20
 
   master1:
     ports:
       - 6179:6179
+      - 16179:16179
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6179
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.11
+
     
   replica1:
     ports:
       - 6180:6180
+      - 16180:16180
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6180
     depends_on:
       - master1
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.21
 
   master2:
     ports:
       - 6279:6279
+      - 16279:16279
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6279
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.12
 
   replica2:
     ports:
       - 6280:6280
+      - 16280:16280
     build:
       context: ./redisnode
       args:
         - REDIS_PORT=6280
     depends_on:
       - master2
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.22
 
   cluster-setup:
-    network_mode: host
+    # network_mode: host
     build: ./cluster-setup
     depends_on:
       - master0
@@ -63,6 +88,9 @@ services:
       - replica0
       - replica1
       - replica2
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.30
 
   online-buddy1:
     ports:
@@ -72,6 +100,9 @@ services:
       args:
         - REDIS_CONNECTION_URL=master0:6079
         - API_PORT=3000
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.40
 
   online-buddy2:
     ports:
@@ -81,3 +112,14 @@ services:
       args:
         - REDIS_CONNECTION_URL=master1:6179
         - API_PORT=3001
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.41
+
+networks:
+  redis_cluster_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 173.18.0.0/16
