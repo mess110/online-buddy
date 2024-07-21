@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+)
+
+var (
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 )
 
 func renderJSON(app *OnlineBuddy, w http.ResponseWriter, _ *http.Request, data any) {
@@ -31,7 +40,16 @@ func serve(app *OnlineBuddy) {
 	})
 
 	http.HandleFunc("/ws/{channel}", func(w http.ResponseWriter, r *http.Request) {
-		HandleWebsocket(app, w, r)
+		channel := r.PathValue("channel")
+
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			app.Logger.Error("error", zap.Error(err))
+			return
+		}
+		defer conn.Close()
+
+		NewWebsocketChannel(app, conn, channel).handle()
 	})
 
 	fs := http.FileServer(http.Dir("./web"))
