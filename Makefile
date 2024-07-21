@@ -29,9 +29,6 @@ redis-reset:
 	redis-cli -c -p 6179 CLUSTER RESET
 	redis-cli -c -p 6279 FLUSHALL
 	redis-cli -c -p 6279 CLUSTER RESET
-	redis-cli -c -p 6080 FLUSHALL
 	redis-cli -c -p 6080 CLUSTER RESET
-	redis-cli -c -p 6180 FLUSHALL
 	redis-cli -c -p 6180 CLUSTER RESET
-	redis-cli -c -p 6280 FLUSHALL
 	redis-cli -c -p 6280 CLUSTER RESET

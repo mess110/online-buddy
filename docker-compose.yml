@@ -98,7 +98,7 @@ services:
     build:
       context: .
       args:
-        - REDIS_CONNECTION_URL=master0:6079
+        - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
         - API_PORT=3000
     networks:
       redis_cluster_net:
@@ -110,7 +110,7 @@ services:
     build:
       context: .
       args:
-        - REDIS_CONNECTION_URL=master1:6179
+        - REDIS_CONNECTION_URL=["master0:6079", "master1:6179", "master2:6279"]
         - API_PORT=3001
     networks:
       redis_cluster_net:

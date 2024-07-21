@@ -9,18 +9,21 @@ import (
 )
 
 type RedisDB struct {
-	Client  *redis.ClusterClient
-	address string
-	ctx     context.Context
+	ClusterClient *redis.ClusterClient
+
+	ctx context.Context
+
+	addresses []string
+	isCluster bool
 }
 
-func NewRedisClient(address string) *RedisDB {
+func NewRedisClient(addrs []string, isCluster bool) *RedisDB {
 	// rdb := redis.NewClient(&redis.Options{
 	// 	Addr: address,
 	// })
 
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: []string{"master0:6079", "master1:6179", "master2:6279"},
+		Addrs: addrs,
 	})
 
 	ctx := context.Background()
@@ -31,25 +34,28 @@ func NewRedisClient(address string) *RedisDB {
 	}
 
 	return &RedisDB{
-		Client:  rdb,
-		address: address,
-		ctx:     ctx,
+		ClusterClient: rdb,
+
+		ctx: ctx,
+
+		addresses: addrs,
+		isCluster: isCluster,
 	}
 }
 
 func (db *RedisDB) Subscribe(channels ...string) *redis.PubSub {
-	return db.Client.Subscribe(channels...)
+	return db.ClusterClient.Subscribe(channels...)
 }
 
 func (db *RedisDB) Publish(channel string, message interface{}) *redis.IntCmd {
-	return db.Client.Publish(channel, message)
+	return db.ClusterClient.Publish(channel, message)
 }
 
 func (db *RedisDB) Set(key string, value interface{}) error {
 	exp := time.Duration(600 * time.Second) // 10 minutes
-	return db.Client.Set(key, value, exp).Err()
+	return db.ClusterClient.Set(key, value, exp).Err()
 }
 
 func (db *RedisDB) Get(key string) (interface{}, error) {
-	return db.Client.Get(key).Result()
+	return db.ClusterClient.Get(key).Result()
 }
